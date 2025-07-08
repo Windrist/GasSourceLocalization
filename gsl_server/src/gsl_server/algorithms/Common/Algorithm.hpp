@@ -51,6 +51,7 @@ namespace GSL
         Vector2 currentCoordinates() {return Vector2(currentRobotPose.pose.pose.position.x, currentRobotPose.pose.pose.position.y);}
     protected:        
         virtual void declareParameters();
+        virtual bool updateRobotPose();
         virtual GSLResult checkSourceFound();
         virtual void saveResultsToFile(GSLResult result);
 

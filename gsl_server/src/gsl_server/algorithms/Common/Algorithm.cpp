@@ -93,7 +93,7 @@ namespace GSL
         try
         {
             geometry_msgs::msg::TransformStamped transform =
-                tf_buffer.buffer.lookupTransform(getParam<std::string>("map_frame", "map"),
+                tfBuffer.buffer.lookupTransform(getParam<std::string>("map_frame", "map"),
                                                  getParam<std::string>("robot_frame", "base_link"), tf2::TimePointZero);
 
             // Update current robot pose from transform
