@@ -25,7 +25,7 @@ namespace GSL
         localizationSub = node->create_subscription<PoseWithCovarianceStamped>(getParam<std::string>("robot_location_topic", "amcl_pose"), 1,
                                                                                std::bind(&Algorithm::localizationCallback, this, _1));
         rclcpp::Rate rate(1);
-        while (resultLogging.robotPosesVector.size() == 0)
+        while (!updateRobotPose() && rclcpp::ok()) // wait for the robot pose to be available
         {
             rate.sleep();
             rclcpp::spin_some(node);
@@ -49,13 +49,13 @@ namespace GSL
         GSL_INFO("Wind sensor topic: '{}'", windSub->get_topic_name());
 
         // extra safety net for when the middleware hangs and the node gets stuck in service/action spinning
-        static auto exit_timer = node->create_wall_timer(std::chrono::seconds((int)resultLogging.maxSearchTime + 10), // extra time to make sure this only happens if the node is deadlocked
-                                                         []()
-                                                         {
-                                                             rclcpp::shutdown();
-                                                             GSL_ERROR("GLOBAL TIMEOUT WAS EXCEEDED, BUT NODE IS STILL RUNNING. STOPPING FORCEFULLY.");
-                                                             CLOSE_PROGRAM;
-                                                         });
+        // static auto exit_timer = node->create_wall_timer(std::chrono::seconds((int)resultLogging.maxSearchTime + 10), // extra time to make sure this only happens if the node is deadlocked
+        //                                                  []()
+        //                                                  {
+        //                                                      rclcpp::shutdown();
+        //                                                      GSL_ERROR("GLOBAL TIMEOUT WAS EXCEEDED, BUT NODE IS STILL RUNNING. STOPPING FORCEFULLY.");
+        //                                                      CLOSE_PROGRAM;
+        //                                                  });
 
         startTime = node->now();
 
@@ -102,6 +102,8 @@ namespace GSL
             currentRobotPose.pose.pose.position.y = transform.transform.translation.y;
             currentRobotPose.pose.pose.position.z = transform.transform.translation.z;
             currentRobotPose.pose.pose.orientation = transform.transform.rotation;
+
+            resultLogging.robotPosesVector.push_back(currentRobotPose);
 
             return true;
         }

@@ -39,9 +39,10 @@ int main(int argc, char** argv)
             }
 #endif
 
+            // Reset active goal after processing
+            gsl_node->m_activeGoal.reset();
             rclcpp::sleep_for(std::chrono::seconds(1));
-            GSL_INFO_COLOR(fmt::terminal_color::blue, "DONE, CLOSING");
-            rclcpp::shutdown();
+            GSL_INFO_COLOR(fmt::terminal_color::blue, "DONE, ready for next request");
         }
     }
 
@@ -73,7 +74,8 @@ rclcpp_action::GoalResponse GSLServer::handle_goal(const rclcpp_action::GoalUUID
 
 rclcpp_action::CancelResponse GSLServer::handle_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<DoGSL>> goal_handle)
 {
-    rclcpp::shutdown();
+    GSL_INFO("GSL goal canceled, resetting active goal");
+    m_activeGoal.reset();
     return rclcpp_action::CancelResponse::ACCEPT;
 }
 
