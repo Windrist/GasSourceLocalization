@@ -57,6 +57,7 @@ namespace GSL
         virtual void processGasAndWindMeasurements(double concentration, double windSpeed, double windDirection) = 0; //called from StopAndMeasure once we have enough data for this position
 
         virtual float gasCallback(const olfaction_msgs::msg::GasSensor::SharedPtr msg);
+        virtual float realGasCallback(const geometry_msgs::msg::Vector3Stamped::SharedPtr msg); //for real gas sensor data, if available
         virtual PoseStamped windCallback(const olfaction_msgs::msg::Anemometer::SharedPtr msg);
 
         virtual void onGetMap(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
@@ -82,6 +83,7 @@ namespace GSL
         // Subscriptions
         //-------
         rclcpp::Subscription<olfaction_msgs::msg::GasSensor>::SharedPtr gasSub;
+        rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr real_gas_sub;
         rclcpp::Subscription<olfaction_msgs::msg::Anemometer>::SharedPtr windSub;
         rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr localizationSub;
 

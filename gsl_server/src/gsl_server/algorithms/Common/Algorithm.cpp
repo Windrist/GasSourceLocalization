@@ -32,6 +32,14 @@ namespace GSL
             GSL_INFO("Waiting to hear from localization topic: {}", localizationSub->get_topic_name());
         }
 
+        // Sensor data subscribers with appropriate QoS settings
+        auto sensor_qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data));
+        sensor_qos.reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT);
+
+        // Real gas sensor for physical experiments
+        real_gas_sub = node->create_subscription<geometry_msgs::msg::Vector3Stamped>(getParam<std::string>("real_gas_topic", "gas_data"), 1,
+                                                                                     std::bind(&Algorithm::realGasCallback, this, _1));
+
         gasSub = node->create_subscription<olfaction_msgs::msg::GasSensor>(getParam<std::string>("enose_topic", "PID/Sensor_reading"), 1,
                                                                            std::bind(&Algorithm::gasCallback, this, _1));
 
@@ -70,9 +78,38 @@ namespace GSL
     void Algorithm::OnUpdate()
     {
         rclcpp::spin_some(node);
+        // Update robot pose using TF transform
+        if (!updateRobotPose())
+        {
+            return; // Skip update if pose unavailable
+        }
         stateMachine.getCurrentState()->OnUpdate();
         // Run anything that was submitted to main thread from the UI or a callback
         functionQueue.run();
+    }
+
+    bool Algorithm::updateRobotPose()
+    {
+        try
+        {
+            geometry_msgs::msg::TransformStamped transform =
+                tf_buffer.buffer.lookupTransform(getParam<std::string>("map_frame", "map"),
+                                                 getParam<std::string>("robot_frame", "base_link"), tf2::TimePointZero);
+
+            // Update current robot pose from transform
+            currentRobotPose.header = transform.header;
+            currentRobotPose.pose.pose.position.x = transform.transform.translation.x;
+            currentRobotPose.pose.pose.position.y = transform.transform.translation.y;
+            currentRobotPose.pose.pose.position.z = transform.transform.translation.z;
+            currentRobotPose.pose.pose.orientation = transform.transform.rotation;
+
+            return true;
+        }
+        catch (const tf2::TransformException& ex)
+        {
+            GSL_ERROR("Failed to get robot pose transform: {}", ex.what());
+            return false;
+        }
     }
 
     bool Algorithm::HasEnded()
@@ -99,6 +136,21 @@ namespace GSL
         stopAndMeasureState->addGasReading(ppm);
         waitForGasState->addMeasurement(ppm);
         return ppm;
+    }
+
+    float Algorithm::realGasCallback(const geometry_msgs::msg::Vector3Stamped::SharedPtr msg)
+    {
+        // Extract gas readings from vector components
+        float front_reading = std::abs(msg->vector.x);
+        float left_reading = std::abs(msg->vector.y);
+        float right_reading = std::abs(msg->vector.z);
+        float max_reading = std::max({front_reading, left_reading, right_reading});
+
+        // Update state measurements
+        stopAndMeasureState->addGasReading(max_reading);
+        waitForGasState->addMeasurement(max_reading);
+
+        return max_reading;
     }
 
     PoseStamped Algorithm::windCallback(const olfaction_msgs::msg::Anemometer::SharedPtr msg)

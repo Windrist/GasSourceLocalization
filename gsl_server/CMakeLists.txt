@@ -27,7 +27,7 @@ set(USE_GADEN OFF)
 set(USE_NAV_ASSISTANT OFF) 
 
 # Compile graphical interface with DearImGUI. Currently only affects the PMFS and SemanticPMFS algorithms. Not required to function, it is mostly for debugging purposes
-set(USE_GUI ON)
+set(USE_GUI OFF)
 
 
 # Tracy is a profiler. ON enables some instrumentation macros (and adds a dependency to tracy). To do sampling-based profiling you also need to run the node as sudo
