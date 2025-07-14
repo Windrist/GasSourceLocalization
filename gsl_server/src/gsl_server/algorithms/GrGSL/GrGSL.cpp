@@ -69,12 +69,17 @@ namespace GSL
     {
         Algorithm::onGetMap(msg);
         GrGSLLib::initMetadata(gridMetadata, map, Utils::getParam(node, "scale", 20));
+        GSL_INFO("Map metadata: cellSize = {}, origin = ({}, {}), dimensions = ({}, {})",
+                 gridMetadata.cellSize, gridMetadata.origin.x, gridMetadata.origin.y,
+                 gridMetadata.dimensions.x, gridMetadata.dimensions.y);
         cells.resize(gridMetadata.dimensions.x * gridMetadata.dimensions.y);
         occupancy.resize(gridMetadata.dimensions.x * gridMetadata.dimensions.y);
 
         GridUtils::reduceOccupancyMap(map.data, map.info.width, occupancy, gridMetadata);
+        GSL_INFO("Occupancy map reduced: {} cells", occupancy.size());
         GrGSLLib::initializeMap(*this,
                                 Grid2D<Cell>(cells, occupancy, gridMetadata));
+        GSL_INFO("Map initialized with {} free cells", gridMetadata.numFreeCells);
         positionOfLastHit = Vector2(currentRobotPose.pose.pose.position.x, currentRobotPose.pose.pose.position.y);
     }
 
