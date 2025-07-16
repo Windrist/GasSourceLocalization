@@ -185,6 +185,8 @@ namespace GSL
         currentGoal = std::nullopt;
         nav_client->async_cancel_all_goals();
         algorithm->OnCompleteNavigation(GSLResult::Failure, previousState);
+
+        algorithm->currentResult = algorithm->checkSourceFound();
     }
 
 } // namespace GSL
