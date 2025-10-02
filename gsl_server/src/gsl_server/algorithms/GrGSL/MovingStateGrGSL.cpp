@@ -20,7 +20,7 @@ namespace GSL
         // update sets
         {
             Vector2Int currentPosition = grgsl.gridMetadata.coordinatesToIndices(grgsl.currentRobotPosition);
-            int expansionSize = 5;
+            int expansionSize = 10;
 
             // loop limits
             size_t startC = std::max(0, currentPosition.x - expansionSize);
@@ -33,7 +33,7 @@ namespace GSL
                 for (int col = startC; col <= endC; col++)
                 {
                     Vector2Int colRow(col, row);
-                    if (closedMoveSet.find(colRow) == closedMoveSet.end() && grid.freeAt(colRow) && grid.dataAt(colRow).distance < 5)
+                    if (closedMoveSet.find(colRow) == closedMoveSet.end() && grid.freeAt(colRow) && grid.dataAt(colRow).distance < 10)
                     {
                         openMoveSet.insert(colRow);
                     }
