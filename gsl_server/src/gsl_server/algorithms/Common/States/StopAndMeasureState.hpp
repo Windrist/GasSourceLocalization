@@ -13,10 +13,10 @@ namespace GSL
         StopAndMeasureState(Algorithm* _algorithm);
 
         double average_concentration();                              // average of all the readings since we entered the state
-        double average_windDirection();                              // average of all the readings since we entered the state
+        double average_windDirection();                              // average upwind direction in map frame (where wind comes FROM)
         double average_windSpeed();                                  // average of all the readings since we entered the state
         virtual void addGasReading(double concentration);            // called from the sensor callback
-        virtual void addWindReading(double speed, double direction); // called from the sensor callback
+        virtual void addWindReading(double speed, double direction); // called from the sensor callback (direction is upwind in map frame)
         virtual void OnUpdate() override;
 
     protected:

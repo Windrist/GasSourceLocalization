@@ -157,18 +157,22 @@ namespace GSL
 
     PoseStamped Algorithm::windCallback(const olfaction_msgs::msg::Anemometer::SharedPtr msg)
     {
-        float downWind_direction = angles::normalize_angle(msg->wind_direction);
-        // Transform from anemometer ref_system to map ref_system using TF
-        PoseStamped anemometer_downWind_pose, map_downWind_pose;
+        // wind_direction from anemometer is the UPWIND direction (where wind comes FROM)
+        // in the sensor's local reference frame [0, 2*pi)
+        float upwind_direction = angles::normalize_angle(msg->wind_direction);
+        
+        // Transform upwind direction from anemometer frame to map frame using TF2
+        // This correctly accounts for the robot's orientation in the map
+        PoseStamped anemometer_upwind_pose, map_upwind_pose;
         try
         {
-            anemometer_downWind_pose.header.frame_id = msg->header.frame_id;
-            anemometer_downWind_pose.pose.position.x = 0.0;
-            anemometer_downWind_pose.pose.position.y = 0.0;
-            anemometer_downWind_pose.pose.position.z = 0.0;
-            anemometer_downWind_pose.pose.orientation = Utils::createQuaternionMsgFromYaw(downWind_direction);
+            anemometer_upwind_pose.header.frame_id = msg->header.frame_id;
+            anemometer_upwind_pose.pose.position.x = 0.0;
+            anemometer_upwind_pose.pose.position.y = 0.0;
+            anemometer_upwind_pose.pose.position.z = 0.0;
+            anemometer_upwind_pose.pose.orientation = Utils::createQuaternionMsgFromYaw(upwind_direction);
 
-            map_downWind_pose = tfBuffer.buffer.transform(anemometer_downWind_pose, "map");
+            map_upwind_pose = tfBuffer.buffer.transform(anemometer_upwind_pose, "map");
         }
         catch (tf2::TransformException& ex)
         {
@@ -176,12 +180,14 @@ namespace GSL
             return PoseStamped();
         }
         // Utils::publishDebugSingleArrow(vmath::WithZ(currentRobotPosition, 0),
-        //                                map_downWind_pose.pose.orientation,
+        //                                map_upwind_pose.pose.orientation,
         //                                -msg->wind_speed,
         //                                Utils::create_color(0, 1, 0),
         //                                "wind_arrow");
-        stopAndMeasureState->addWindReading(msg->wind_speed, Utils::getYaw(map_downWind_pose.pose.orientation));
-        return map_downWind_pose;
+        
+        // Store upwind direction in map frame
+        stopAndMeasureState->addWindReading(msg->wind_speed, Utils::getYaw(map_upwind_pose.pose.orientation));
+        return map_upwind_pose;
     }
 
     void Algorithm::localizationCallback(const PoseWithCovarianceStamped::SharedPtr msg)

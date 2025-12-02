@@ -34,9 +34,11 @@ namespace GSL
 
     void PlumeTracking::processGasAndWindMeasurements(double concentration, double windSpeed, double windDirection)
     {
+        // windDirection is the UPWIND direction in map frame (where wind comes FROM)
+        // When gas is detected, we surge UPWIND toward the source
         if (concentration > thresholdGas && windSpeed > thresholdWind)
         {
-            setSurgeGoal(windDirection);
+            setSurgeGoal(windDirection);  // windDirection = upwind direction toward source
             return;
         }
 
@@ -44,12 +46,12 @@ namespace GSL
 
         static double windDirection_cast;
 
-        // When a cast phase begins, we try to lock in the current wind direction, which will be used to direct all succesive cast attempts
+        // When a cast phase begins, we try to lock in the current upwind direction, which will be used to direct all successive cast attempts
         // if there is no wind, however, we cant cast at all
         if (currentMovement == PTMovement::FollowPlume)
         {
             if (windSpeed > thresholdWind)
-                windDirection_cast = windDirection;
+                windDirection_cast = windDirection;  // Store upwind direction for casting
             else
                 windDirection_cast = DBL_MAX;
         }
